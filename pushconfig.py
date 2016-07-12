@@ -7,6 +7,7 @@
 import sys
 import paramiko
 import time
+import re
 from paramiko import SSHClient
 from multiprocessing import Process
 
@@ -15,13 +16,20 @@ def go(host, demo):
     expect = paramiko.SSHClient()
     expect.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     expect.connect(host, username="cumulus", password="CumulusLinux!")
-    for line in ['sudo wget %s/%s/interfaces'%(url, host),
+    commandlist=['sudo wget %s/%s/interfaces'%(url, host),
                  'sudo wget %s/%s/Quagga.conf'%(url, host),
                  'sudo wget %s/%s/daemons'%(url, host),
                  'sudo mv interfaces /etc/network/interfaces',
                  'sudo mv Quagga.conf /etc/quagga/Quagga.conf',
-                 'sudo mv daemons /etc/quagga/daemons',
-                 'sudo reboot']:
+                 'sudo mv daemons /etc/quagga/daemons']
+
+    if re.search('server', host):
+        commandlist.append('sudo reboot')
+    else:
+        commandlist.append('sudo service quagga restart')
+        commandlist.append('sudo service networking restart')
+
+    for line in commandlist:
         stdin, stdout, stderr = expect.exec_command(line, get_pty=True)
         stdout.channel.recv_exit_status()
         print("%s: %s"%(host, line))
