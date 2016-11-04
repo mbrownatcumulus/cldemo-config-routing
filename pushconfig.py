@@ -26,7 +26,8 @@ def go(host, demo):
     if re.search('server', host):
         commandlist.append('sudo reboot')
     else:
-        commandlist.append('sudo service quagga restart')
+        commandlist.append('sudo systemctl reset-failed quagga')
+        commandlist.append('sudo systemctl restart quagga')
         commandlist.append('sudo service networking restart')
 
     for line in commandlist:
